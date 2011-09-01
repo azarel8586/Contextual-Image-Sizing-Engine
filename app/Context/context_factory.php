@@ -176,13 +176,15 @@ class Context_Factory
 		} catch ( Exception $e ) { /* move along */ }
 		
 		// Step two - LOOK UP FROM XML DB
-		//try {
+		try {
 			$this->_lookup_user_agent();
 			// At this point we have our display information so now stub and return the object
 			return $this->_populate_display();
-		//} catch ( Exception $e ) { /* move along */ }
+		} catch ( Exception $e ) { /* move along */ }
 		
 		// Step three - APPLY SOME BASIC RULES TO WHAT WE KNOW ABOUT THE USER
+		
+		// Step four - PROVIDE A DISPLAY THAT LEAVES THE IMAGES AS IS
 	}
 	
 	/**

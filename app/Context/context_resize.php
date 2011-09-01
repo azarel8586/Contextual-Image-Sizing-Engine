@@ -61,6 +61,19 @@ class Context_Resize
 		return $this->_Image;
 	}
 	
+	/**
+	 *	examines the file type and determines the content type header to return to the platter.
+	 *	The return from this method is only the string for the content-type and can be used
+	 *	outside the context of the header.
+	 *	@access public
+	 *	@param null
+	 *	@return string The content type declaration
+	*/
+	public function get_content_header ()
+	{
+		return "image/" . $this->_Image->getFormat();
+	}
+	
 	////****////****////****////****
 	//** PROTECTED METHODS
 	////****////****////****////****
@@ -85,7 +98,6 @@ class Context_Resize
 	*/
 	protected function _fetch_original ()
 	{
-		echo "\nFetching Original\n";
 		$origPath = ORIGINAL_IMG_DIR . $this->_path;
 		if ( file_exists( $origPath ) ) {
 			$this->_Image = new Imagick( $origPath );
@@ -116,11 +128,16 @@ class Context_Resize
 			} else {
 				$y = $this->_Display->get_image_size();
 			}
-			$this->_Image->thumbnailImage($x, $y);	
+			$this->_Image->scaleImage ($x,$y);
+			//$this->_Image->thumbnailImage($x, $y);	
 		}
 		
+		$this->_Image->setImageResolution(72,72);
+		$this->_Image->stripImage();
+		
 		if ( $this->_Image->getFormat == 'jpg' ) {
-			$this->_Image->setImageCompressionQuality(55);
+			$this->_Image->setImageCompression( Imagick::COMPRESSION_JPEG ); 
+			$this->_Image->setImageCompressionQuality( (int)JPEG_COMPRESSION );
 		}
 	}
 	
@@ -128,6 +145,8 @@ class Context_Resize
 	//** SETTERS AND GETTERS
 	////****////****////****////****
 	public function set_display ( $pDisplay ) { $this->_Display = ( empty($pDisplay) ? null : $pDisplay ); }
+	public function get_display () { return $this->_Display; }
 	
 	public function set_path ( $pPath ) { $this->_path = ( empty($pPath) ? null : $pPath ); }
+	public function get_path () { return $this->_path; }
 }

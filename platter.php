@@ -32,7 +32,10 @@ require_once( "config.ini" );
 include ( APP_DIR . "Context/context_engine.php" );
 
 // Now gather and sanitize our inputs
-$file = addslashes( urldecode( $_GET['f'] ) ); // This is the only REQUIRED input
+
+// This is the only REQUIRED input
+$file = explode( '/', urldecode( $_GET['f'] ) ); // Explode it in case our user tried to pass in a full path.
+$file = array_pop( $file );
 
 $enabled = ( isset($_GET['enable']) ? addslashes( urldecode( $_GET['enable'] ) ) : 1 ); // should I parse the file into a new size or transmit the orginal
 
@@ -49,5 +52,15 @@ $ContextFactory = Context_Factory( $xRes, $yRes, $scaleSize, $maxSize, $minSize,
 $Display = $ContextFactory->create();
 
 // Now that Display model should be passed into the Image Resizing engine
+try {
+	$Image = new Context_Resize( $Display, $file );
+	$imgData = $Image->fetch_image();
+	$contentType = $Image->get_content_header();
+	
+	header( "Content-Type: image/$contentType" );
+	echo $imgData;
+} catch ( Exception $e ) {
+	// The file could not be parsed or fetched, you may wish to return a default image here.
+}
 
 ?>
