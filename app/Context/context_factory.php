@@ -37,7 +37,7 @@ class Context_Factory
 	// Private constructor so the factory must be used
 	public function __construct ( $pX, $pY, $pScale, $pMax, $pMin, $pOverride = null )
 	{
-		$this->_ac = ( isset( $_SERVER['HTTP_ACCEPT'] ) ? $_SERVER['HTTP_ACCEPT'] : null );
+		$this->_ac = ( isset( $_SERVER['HTTP_ACCEPT'] ) ? $_SERVER['HTTP_ACCEPT'] : 'NONE' );
 		$this->_ua = ( !empty( $pOverride ) ? $pOverride : $_SERVER['HTTP_USER_AGENT'] );
 		
 		$this->_xRes = $pX;
@@ -55,23 +55,67 @@ class Context_Factory
 	 *	This checks to see if the device is an older WAP style.
 	 *
 	 *	@access protected
-	 *	@static
+	 *	@throws Exception
 	 *	@param null
-	 *	@return boolean If the device is WAP style
+	 *	@return void
 	*/
-	protected function _check_wap ()
+	protected function _check_rules ()
 	{
+		// Acording to a little birdy this is suposed to be faster than using a if statement
+		switch(true)
+		{
+			case ( preg_match('/ipad/i', $this->_ua) ):
+				$this->_displayX = 1024;
+				$this->_displayY = 768;
+				$this->_deviceName = "Apple iPad [DEFAULT]";
+				break;
 		
-		if (
-			strpos( $ac, 'application/vnd.wap.xhtml+xml' ) !== false ||
-			strpos( $ua, 'wap1.' ) !== false ||
-			strpos( $ua, 'wap2.' ) !== false
-		){
-			return true;
-		} elseif ( strpos( $ua, 'wap1.') !== false || strpos( $ua, 'wap2.') !== false ) {
-			return true;
+			case ( preg_match('/ipod/i', $this->_ua) || preg_match('/iphone/i', $this->_ua) ):
+				$this->_displayX = 480;
+				$this->_displayY = 320;
+				$this->_deviceName = "iPhone / iPod [DEFAULT]";
+				break;
+		
+			case ( preg_match('/android/i', $this->_ua) || preg_match('/opera mini/i', $this->_ua) ):
+				$this->_displayX = 470;
+				$this->_displayY = 320;
+				$this->_deviceName = "Android / OperaMini [DEFAULT]";
+				break;
+		
+			case ( preg_match('/blackberry/i', $this->_ua) ):
+				$this->_displayX = 480;
+				$this->_displayY = 360;
+				$this->_deviceName = "Blackberry [DEFAULT]";
+				break;
+		
+			case ( preg_match('/(pre\/|palm os|palm|hiptop|avantgo|plucker|xiino|blazer|elaine)/i', $this->_ua) ):
+				$this->_displayX = 480;
+				$this->_displayY = 360;
+				$this->_deviceName = "Palm OS [DEFAULT]";
+				break;
+		
+			case ( preg_match('/(iris|3g_t|windows ce|opera mobi|windows ce; smartphone;|windows ce; iemobile)/i', $this->_ua) ):
+				$this->_displayX = 480;
+				$this->_displayY = 640;
+				$this->_deviceName = "Palm OS [DEFAULT]";
+				break;
+		
+			case (preg_match('/(mini 9.5|vx1000|lge |m800|e860|u940|ux840|compal|wireless| mobi|ahong|lg380|lgku|lgu900|lg210|lg47|lg920|lg840|lg370|sam-r|mg50|s55|g83|t66|vx400|mk99|d615|d763|el370|sl900|mp500|samu3|samu4|vx10|xda_|samu5|samu6|samu7|samu9|a615|b832|m881|s920|n210|s700|c-810|_h797|mob-x|sk16d|848b|mowser|s580|r800|471x|v120|rim8|c500foma:|160x|x160|480x|x640|t503|w839|i250|sprint|w398samr810|m5252|c7100|mt126|x225|s5330|s820|htil-g1|fly v71|s302|-x113|novarra|k610i|-three|8325rc|8352rc|sanyo|vx54|c888|nx250|n120|mtk |c5588|s710|t880|c5005|i;458x|p404i|s210|c5100|teleca|s940|c500|s590|foma|samsu|vx8|vx9|a1000|_mms|myx|a700|gu1100|bc831|e300|ems100|me701|me702m-three|sd588|s800|8325rc|ac831|mw200|brew |d88|htc\/|htc_touch|355x|m50|km100|d736|p-9521|telco|sl74|ktouch|m4u\/|me702|8325rc|kddi|phone|lg |sonyericsson|samsung|240x|x320|vx10|nokia|sony cmd|motorola|up.browser|up.link|mmp|symbian|smartphone|midp|wap|vodafone|o2|pocket|kindle|mobile|psp|treo)/i', $this->_ua)):
+				$this->_displayX = 176;
+				$this->_displayY = 220;
+				$this->_deviceName = "Other Mobile Browser [DEFAULT]";
+				break;
+		
+			case ( (strpos($this->_ac,'text/vnd.wap.wml')>0) || (strpos($this->_ac,'application/vnd.wap.xhtml+xml')>0) || strpos($this->_ua, 'wap1.') || strpos( $this->_ua, 'wap2.') || isset($_SERVER['HTTP_X_WAP_PROFILE']) || isset($_SERVER['HTTP_PROFILE']) ):
+				$this->_displayX = 128;
+				$this->_displayY = 128;
+				$this->_deviceName = "WAP Device [DEFAULT]";
+				break;
+			
+			default:
+				throw new Exception ( "No applicable rule was located." );
+				break;
 		}
-		return false;
 	}
 	
 	/**
@@ -142,7 +186,7 @@ class Context_Factory
 			$porX = ( empty($this->_xRes) ? $this->_displayX : $this->_xRes );
 			$porY = ( empty($this->_yRes) ? $this->_displayY : $this->_yRes );
             
-			$size = ( $porX > $porY ? $porX : $porY );
+			$size = ( $porX >= $porY ? $porX : $porY );
 			if ( !empty($this->_scale) ) {
 				$size = $size*$this->_scale;
 			}
@@ -183,8 +227,13 @@ class Context_Factory
 		} catch ( Exception $e ) { /* move along */ }
 		
 		// Step three - APPLY SOME BASIC RULES TO WHAT WE KNOW ABOUT THE USER
+		try {
+			$this->_check_rules();
+			return $this->_populate_display();
+		} catch ( Exception $e ) { /* move along */ } 
 		
 		// Step four - PROVIDE A DISPLAY THAT LEAVES THE IMAGES AS IS
+		return new Context_Display( 9001,9001,9001 ); // This should short circuit most images for the moment being
 	}
 	
 	/**

@@ -1,0 +1,48 @@
+# Contextual Image Sizeing Engine - CISE
+
+CISE is a program that allows users to define a single URL for an image, but provide dynamic
+resizing of content based upon the specifications of their browser / device.  The resized images
+are then cached and saved for use in similar devices.  Caching occurs on a dimension basis, so
+two divices with shared resolution will use the same cache image.  Also, since the cache is built
+on demand, only devices that are likely to visit your site create extra file overhead.
+
+Normal desktop
+browsers will return the unadulterated image.
+
+## Usage
+
+Server will need the ImageMagic / Imagik extension.
+
+Image tags will need to be formated thusly:
+
+	<img src="/path-to-the-platter/platter.php?f=myimage.jpg" />
+
+Other parameters can be passed in to alter the behavior of the engine (these are not required):
+
+	?enable		Preform resizing on this image? Accepted values are either 1 or 0
+	?t			{top} What is the maximum allowable size of the image - integer
+	?b			{bottom} Minimum size allowed - integer
+	?sc			{scale} Decimal percent larger/smaller to make the image from the determined size - ex: 0.76
+	?x			X Dimension of the viewport as an override to the determined value - integer
+	?y			Y Dimension of the viewport as an override to the determined value - integer
+	?o			{override} context where you can supply your own useragent string to lookup against - string
+
+## Todo
+
+* Support the GD libraray in addition to ImageMagic / Imagik
+* Refactor tests into their own entities and include dependency injection mechanisim
+* Encapsulate Platter.php into its own entity to improve the user interface with the software
+* Include alternate Exception types
+* Include error logging
+* Complete and include unit tests
+* Integrate Memcache
+
+## Author
+
+[Stephen Hiller](http://www.linkedin.com/pub/stephen-hiller/35/ba4/b24)
+
+## Other
+
+[MIT License](http://www.opensource.org/licenses/mit-license.php)
+
+Copyright (c) 2011, Stephen Hiller (stephen.webdev -[at]- gmail -[dot]- com)
